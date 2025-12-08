@@ -19,7 +19,7 @@ const { exportToPdf, exportToJson, exportInstructions, isExporting, exportError 
 
 // PDF Options
 const pdfOptions = reactive({
-  platesPerPage: 6,
+  platesPerPage: 3,
   filename: 'bankoplader.pdf',
   includeWinningMarkers: false
 })
@@ -32,9 +32,8 @@ const jsonOptions = reactive({
 
 // Plates per page options
 const platesPerPageOptions = [
-  { label: '2 plader', value: 2 },
-  { label: '4 plader', value: 4 },
-  { label: '6 plader', value: 6 }
+  { label: '3 plader (stor)', value: 3 },
+  { label: '6 plader (lille)', value: 6 }
 ]
 
 // Computed

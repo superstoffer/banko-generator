@@ -52,10 +52,17 @@ export const useExporter = () => {
       const pageWidth = 210
       const pageHeight = 297
       const margin = 15
-      const plateWidth = (pageWidth - margin * 2 - 10) / 2  // 2 columns
-      const plateHeight = (pageHeight - margin * 2 - 20) / 3  // 3 rows
+      
+      // Calculate layout based on plates per page
+      // 3 plates = 1 column, 3 rows (full width cards)
+      // 6 plates = 2 columns, 3 rows
+      const cols = options.platesPerPage <= 3 ? 1 : 2
+      const rows = Math.ceil(options.platesPerPage / cols)
+      const gap = 8
+      
+      const plateWidth = (pageWidth - margin * 2 - (cols - 1) * gap) / cols
+      const plateHeight = (pageHeight - margin * 2 - (rows - 1) * gap) / rows
 
-      let currentPage = 0
       let plateIndex = 0
 
       for (const plate of plates) {
@@ -64,14 +71,13 @@ export const useExporter = () => {
         // Add new page if needed
         if (positionOnPage === 0 && plateIndex > 0) {
           doc.addPage()
-          currentPage++
         }
 
         // Calculate position
-        const col = positionOnPage % 2
-        const row = Math.floor(positionOnPage / 2)
-        const x = margin + col * (plateWidth + 10)
-        const y = margin + row * (plateHeight + 10)
+        const col = positionOnPage % cols
+        const row = Math.floor(positionOnPage / cols)
+        const x = margin + col * (plateWidth + gap)
+        const y = margin + row * (plateHeight + gap)
 
         // Draw plate
         drawPlateOnPdf(doc, plate, x, y, plateWidth, plateHeight, options)
@@ -97,7 +103,7 @@ export const useExporter = () => {
   }
 
   /**
-   * Draws a single plate on the PDF
+   * Draws a single plate on the PDF - Simple traditional Danish banko style
    */
   const drawPlateOnPdf = (
     doc: jsPDF,
@@ -109,54 +115,54 @@ export const useExporter = () => {
     options: PdfExportOptions
   ): void => {
     const cellWidth = width / BANKO_CONSTANTS.COLUMNS
-    const cellHeight = (height - 8) / BANKO_CONSTANTS.ROWS  // Leave room for ID
+    const cellHeight = height / BANKO_CONSTANTS.ROWS
 
-    // Draw plate border
-    doc.setDrawColor(100)
-    doc.setLineWidth(0.5)
-    doc.rect(x, y, width, height)
-
-    // Draw plate ID
-    doc.setFontSize(8)
-    doc.setTextColor(100)
-    doc.text(plate.id, x + 2, y + 5)
-
-    // Draw winning marker if applicable
+    // Draw winner indicator outside the card (to the left)
     if (options.includeWinningMarkers && plate.isWinning) {
-      doc.setTextColor(255, 165, 0)
-      doc.text('★ VINDER', x + width - 20, y + 5)
+      doc.setFillColor(251, 191, 36)
+      doc.roundedRect(x - 22, y + height / 2 - 5, 20, 10, 2, 2, 'F')
+      doc.setTextColor(0)
+      doc.setFontSize(6)
+      doc.setFont('helvetica', 'bold')
+      doc.text('VINDER', x - 12, y + height / 2 + 2, { align: 'center' })
     }
 
-    // Draw grid
-    const gridY = y + 8
-    doc.setTextColor(0)
-    doc.setFontSize(12)
+    // Draw outer card border
+    doc.setDrawColor(0)
+    doc.setLineWidth(0.8)
+    doc.rect(x, y, width, height, 'S')
 
+    // Draw grid
     for (let row = 0; row < BANKO_CONSTANTS.ROWS; row++) {
       for (let col = 0; col < BANKO_CONSTANTS.COLUMNS; col++) {
         const cellX = x + col * cellWidth
-        const cellY = gridY + row * cellHeight
+        const cellY = y + row * cellHeight
 
-        // Draw cell border
-        doc.setDrawColor(180)
-        doc.setLineWidth(0.2)
-        doc.rect(cellX, cellY, cellWidth, cellHeight)
-
-        // Draw number if present
         const gridRow = plate.grid[row]
         const cell = gridRow ? gridRow[col] : null
-        if (cell !== null && cell !== undefined) {
-          // Fill cell background
-          doc.setFillColor(245, 245, 245)
-          doc.rect(cellX, cellY, cellWidth, cellHeight, 'F')
-          doc.rect(cellX, cellY, cellWidth, cellHeight, 'S')
 
-          // Draw number
-          doc.setFontSize(11)
+        // Fill cell background
+        if (cell !== null && cell !== undefined) {
+          doc.setFillColor(255, 255, 255) // White for numbers
+        } else {
+          doc.setFillColor(240, 240, 240) // Light gray for empty
+        }
+        doc.rect(cellX, cellY, cellWidth, cellHeight, 'F')
+
+        // Draw cell border
+        doc.setDrawColor(0)
+        doc.setLineWidth(0.3)
+        doc.rect(cellX, cellY, cellWidth, cellHeight, 'S')
+
+        // Draw number if present
+        if (cell !== null && cell !== undefined) {
+          doc.setTextColor(0)
+          doc.setFontSize(14)
+          doc.setFont('helvetica', 'bold')
           doc.text(
             cell.toString(),
             cellX + cellWidth / 2,
-            cellY + cellHeight / 2 + 3,
+            cellY + cellHeight / 2 + 4,
             { align: 'center' }
           )
         }
