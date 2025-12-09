@@ -114,29 +114,39 @@ export const useExporter = () => {
     height: number,
     options: PdfExportOptions
   ): void => {
-    const cellWidth = width / BANKO_CONSTANTS.COLUMNS
-    const cellHeight = height / BANKO_CONSTANTS.ROWS
+    // Calculate square cell size based on available space
+    const maxCellWidth = width / BANKO_CONSTANTS.COLUMNS
+    const maxCellHeight = height / BANKO_CONSTANTS.ROWS
+    const cellSize = Math.min(maxCellWidth, maxCellHeight) // Square cells
+    
+    // Calculate actual grid dimensions
+    const gridWidth = cellSize * BANKO_CONSTANTS.COLUMNS
+    const gridHeight = cellSize * BANKO_CONSTANTS.ROWS
+    
+    // Center the grid in the available space
+    const gridX = x + (width - gridWidth) / 2
+    const gridY = y + (height - gridHeight) / 2
 
     // Draw winner indicator outside the card (to the left)
     if (options.includeWinningMarkers && plate.isWinning) {
       doc.setFillColor(251, 191, 36)
-      doc.roundedRect(x - 22, y + height / 2 - 5, 20, 10, 2, 2, 'F')
+      doc.roundedRect(gridX - 22, gridY + gridHeight / 2 - 5, 20, 10, 2, 2, 'F')
       doc.setTextColor(0)
       doc.setFontSize(6)
       doc.setFont('helvetica', 'bold')
-      doc.text('VINDER', x - 12, y + height / 2 + 2, { align: 'center' })
+      doc.text('VINDER', gridX - 12, gridY + gridHeight / 2 + 2, { align: 'center' })
     }
 
     // Draw outer card border
     doc.setDrawColor(0)
     doc.setLineWidth(0.8)
-    doc.rect(x, y, width, height, 'S')
+    doc.rect(gridX, gridY, gridWidth, gridHeight, 'S')
 
-    // Draw grid
+    // Draw grid with square cells
     for (let row = 0; row < BANKO_CONSTANTS.ROWS; row++) {
       for (let col = 0; col < BANKO_CONSTANTS.COLUMNS; col++) {
-        const cellX = x + col * cellWidth
-        const cellY = y + row * cellHeight
+        const cellX = gridX + col * cellSize
+        const cellY = gridY + row * cellSize
 
         const gridRow = plate.grid[row]
         const cell = gridRow ? gridRow[col] : null
@@ -147,22 +157,23 @@ export const useExporter = () => {
         } else {
           doc.setFillColor(240, 240, 240) // Light gray for empty
         }
-        doc.rect(cellX, cellY, cellWidth, cellHeight, 'F')
+        doc.rect(cellX, cellY, cellSize, cellSize, 'F')
 
         // Draw cell border
         doc.setDrawColor(0)
         doc.setLineWidth(0.3)
-        doc.rect(cellX, cellY, cellWidth, cellHeight, 'S')
+        doc.rect(cellX, cellY, cellSize, cellSize, 'S')
 
-        // Draw number if present
+        // Draw number if present (centered in square cell)
         if (cell !== null && cell !== undefined) {
           doc.setTextColor(0)
-          doc.setFontSize(14)
+          const fontSize = cellSize * 0.90 // Bigger font
+          doc.setFontSize(fontSize)
           doc.setFont('helvetica', 'bold')
           doc.text(
             cell.toString(),
-            cellX + cellWidth / 2,
-            cellY + cellHeight / 2 + 4,
+            cellX + cellSize / 2,
+            cellY + cellSize / 2 + fontSize * 0.15, // True vertical center
             { align: 'center' }
           )
         }

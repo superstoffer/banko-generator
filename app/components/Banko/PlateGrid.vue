@@ -94,12 +94,12 @@ const props = withDefaults(defineProps<Props>(), {
 /* Cells */
 .banko-cell {
   flex: 1;
-  aspect-ratio: 1.2;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 30px;
+  min-width: 32px;
+  min-height: 32px;
   border-right: 1px solid #000000;
 }
 
@@ -108,8 +108,8 @@ const props = withDefaults(defineProps<Props>(), {
 }
 
 .banko-card.compact .banko-cell {
-  min-width: 26px;
-  min-height: 22px;
+  min-width: 24px;
+  min-height: 24px;
 }
 
 .banko-cell.has-number {
@@ -121,13 +121,15 @@ const props = withDefaults(defineProps<Props>(), {
 }
 
 .cell-number {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 900;
   color: #000000;
   user-select: none;
+  line-height: 1;
 }
 
 .banko-card.compact .cell-number {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 900;
 }
 </style>
