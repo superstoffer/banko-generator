@@ -54,9 +54,9 @@ const handleGenerate = async (config: GenerationConfig) => {
     <UContainer>
       <!-- Header -->
       <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-neutral-900 mb-2">🎲 Banko Generator</h1>
+        <h1 class="text-4xl font-bold text-neutral-900 mb-4">Banko Generator</h1>
         <p class="text-lg text-neutral-600">
-          Generér professionelle bankoplader med valgfri prank-funktionalitet
+          Lav dine egne bankoplader. Vælg "Prank mode" for at lave et spil, hvor kun bestemte plader vinder.
         </p>
       </div>
 
