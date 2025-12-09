@@ -78,16 +78,17 @@ export function generatePrankPlates(config: GenerationConfig): GenerationResult 
 /**
  * Finds the optimal set of winning plates that maximizes prank effectiveness
  * 
- * Strategy: Try multiple random selections and pick the one with the best
- * excluded numbers ratio (fewest exclusions that still block all non-winners)
+ * Strategy: Try multiple random selections and pick the one that:
+ * 1. Blocks ALL non-winning plates (required)
+ * 2. Uses the fewest excluded numbers (preferred)
  */
 function findOptimalWinningPlates(
   plates: BankoPlate[],
   winningCount: number
 ): { winningPlateIds: string[]; excludedNumbers: number[] } {
-  const maxAttempts = 100
-  let bestResult: { winningPlateIds: string[]; excludedNumbers: number[] } | null = null
-  let bestScore = -1
+  const maxAttempts = 200
+  let bestResult: { winningPlateIds: string[]; excludedNumbers: number[]; allBlocked: boolean } | null = null
+  let bestScore = -Infinity
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     // Randomly select winning plates
@@ -97,23 +98,32 @@ function findOptimalWinningPlates(
 
     // Calculate excluded numbers for this selection
     const result = calculateExcludedNumbers(plates, candidateWinnerIds)
+    
+    // Check if ALL non-winning plates are blocked
+    const nonWinningPlates = plates.filter(p => !candidateWinnerIds.includes(p.id))
+    const excludedSet = new Set(result.excludedNumbers)
+    const blockedCount = nonWinningPlates.filter(p => 
+      p.numbers.some(n => excludedSet.has(n))
+    ).length
+    const allBlocked = blockedCount === nonWinningPlates.length
 
-    // Score: we want excluded numbers > 0 but not too many
-    // Ideal is having some exclusions (prank works) but not too many (suspicious)
-    const score = result.excludedNumbers.length > 0 
-      ? (result.excludedNumbers.length <= 20 ? 100 - result.excludedNumbers.length : 50 - result.excludedNumbers.length)
-      : -1000
+    // Score: prioritize blocking all plates, then minimize excluded numbers
+    // allBlocked gives a huge bonus, then we prefer fewer exclusions
+    const score = allBlocked 
+      ? 10000 - result.excludedNumbers.length  // All blocked: prefer fewer exclusions
+      : blockedCount  // Not all blocked: prefer more blocked
 
     if (score > bestScore) {
       bestScore = score
       bestResult = {
         winningPlateIds: candidateWinnerIds,
-        excludedNumbers: result.excludedNumbers
+        excludedNumbers: result.excludedNumbers,
+        allBlocked
       }
     }
 
-    // If we found a good result, we can stop early
-    if (result.excludedNumbers.length >= 5 && result.excludedNumbers.length <= 15) {
+    // If we found a perfect result with reasonable exclusions, stop early
+    if (allBlocked && result.excludedNumbers.length <= 15) {
       break
     }
   }
